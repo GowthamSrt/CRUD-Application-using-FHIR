@@ -29,9 +29,9 @@ public class ObservationMapper {
                 .ifPresent(value -> observation.setValue(new Quantity()
                         .setValue(new BigDecimal(value))
                         .setUnit(observationDto.getUnit())));
-        if (observationDto.getPatientId() != null) {
-            observation.setSubject(new Reference("Patient/" + observationDto.getPatientId()));
-        }
+        Optional.ofNullable(observationDto.getPatientId())
+                .ifPresent(patientId -> observation
+                        .setSubject(new Reference(patientId)));
         return observation;
     }
 

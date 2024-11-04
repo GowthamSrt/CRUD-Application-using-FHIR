@@ -2,6 +2,11 @@ package com.ideas2it.patient.service.impl;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.github.fge.jsonpatch.JsonPatchException;
 import com.ideas2it.patient.dto.ObservationDto;
 import com.ideas2it.patient.mapper.ObservationMapper;
 import com.ideas2it.patient.service.ObservationService;
@@ -10,6 +15,7 @@ import lombok.val;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.utilities.json.JsonException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +28,7 @@ public class ObservationServiceImpl implements ObservationService {
     private final static FhirContext fhirContext;
     private final static IGenericClient client;
     private final ObservationMapper observationMapper;
+    private final ObjectMapper objectMapper;
 
     static {
         fhirContext = FhirContext.forR4();
@@ -50,16 +57,40 @@ public class ObservationServiceImpl implements ObservationService {
         return observationMapper.toDto(observation);
     }
 
-    @Override
-    public ObservationDto updateObservation(Long id, ObservationDto observationDto) {
-        val observation = observationMapper.toEntity(observationDto);
-        observation.setId(id.toString());
-        val updatedObservation = (Observation) client.update()
-                .resource(observation)
-                .execute()
-                .getResource();
-        return observationMapper.toDto(updatedObservation);
-    }
+//    @Override
+//    public ObservationDto updateObservation(Long id, ObservationDto observationDto) {
+//        val observation = observationMapper.toEntity(observationDto);
+//        observation.setId(id.toString());
+//        val updatedObservation = (Observation) client.update()
+//                .resource(observation)
+//                .execute()
+//                .getResource();
+//        return observationMapper.toDto(updatedObservation);
+//    }
+
+//    @Override
+//    public ObservationDto updateObservation(Long id, JsonPatch patch) {
+//        Observation existingObservation = client.read()
+//                .resource(Observation.class)
+//                .withId(id.toString())
+//                .execute();
+//        Observation patchedObservation = applyPatchToObservation(patch, existingObservation);
+//        Observation updatedObservation = (Observation) client.update()
+//                .resource(patchedObservation)
+//                .execute()
+//                .getResource();
+//        return observationMapper.toDto(updatedObservation);
+//    }
+//
+//    private Observation applyPatchToObservation(JsonPatch patch, Observation observation) {
+//        try {
+//            JsonNode observationNode = objectMapper.convertValue(observation, JsonNode.class);
+//            JsonNode patchedNode = patch.apply(observationNode);
+//            return objectMapper.treeToValue(patchedNode, Observation.class);
+//        } catch (JsonProcessingException | JsonPatchException e) {
+//            throw new RuntimeException("Failed to apply Json Patch", e);
+//        }
+//    }
 
     @Override
     public String deleteObservation(Long id) {
@@ -85,5 +116,32 @@ public class ObservationServiceImpl implements ObservationService {
                 .map(observationMapper :: toDto)
                 .toList();
         return observations;
+    }
+
+    @Override
+    public ObservationDto updateObservation(Long id, JsonPatch patch) {
+        Observation existingObservation = client.read()
+                .resource(Observation.class)
+                .withId(id.toString())
+                .execute();
+        ObservationDto observationDto = observationMapper.toDto(existingObservation);
+        ObservationDto patchedDto = applyPatchToObservationDto(patch, observationDto);
+        Observation patchedObservation = observationMapper.toEntity(patchedDto);
+        patchedObservation.setId(id.toString());
+        Observation updatedObservation = (Observation) client.update()
+                .resource(patchedObservation)
+                .execute()
+                .getResource();
+        return observationMapper.toDto(updatedObservation);
+    }
+
+    private ObservationDto applyPatchToObservationDto(JsonPatch patch, ObservationDto observationDto) {
+        try {
+            JsonNode observationNode = objectMapper.convertValue(observationDto, JsonNode.class);
+            JsonNode patchedNode = patch.apply(observationNode);
+            return objectMapper.treeToValue(patchedNode, ObservationDto.class);
+        } catch (JsonPatchException | JsonProcessingException e) {
+            throw new RuntimeException("Failed to apply JSON patch to Observation DTO", e);
+        }
     }
 }

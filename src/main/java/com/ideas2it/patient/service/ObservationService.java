@@ -1,7 +1,7 @@
 package com.ideas2it.patient.service;
 
+import com.github.fge.jsonpatch.JsonPatch;
 import com.ideas2it.patient.dto.ObservationDto;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,7 +12,7 @@ public interface ObservationService {
 
     ObservationDto getObservationById(Long id);
 
-    ObservationDto updateObservation(Long id, ObservationDto observationDto);
+    ObservationDto updateObservation(Long id, JsonPatch patch);
 
     String deleteObservation(Long id);
 

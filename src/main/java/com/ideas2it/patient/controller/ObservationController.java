@@ -1,10 +1,12 @@
 package com.ideas2it.patient.controller;
 
+import com.github.fge.jsonpatch.JsonPatch;
 import com.ideas2it.patient.dto.ObservationDto;
 import com.ideas2it.patient.service.ObservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,10 +30,17 @@ public class ObservationController {
         return new ResponseEntity<>(observationService.getObservationById(id), HttpStatus.OK);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ObservationDto> updateObservation(@PathVariable Long id, @RequestBody ObservationDto observationDto) {
-        return new ResponseEntity<>(observationService.updateObservation(id, observationDto), HttpStatus.OK);
+//    @PutMapping("/{id}")
+//    public ResponseEntity<ObservationDto> updateObservation(@PathVariable Long id, @RequestBody ObservationDto observationDto) {
+//        return new ResponseEntity<>(observationService.updateObservation(id, observationDto), HttpStatus.OK);
+//    }
+
+    @PatchMapping(value = "/{id}", consumes = "application/json-patch+json")
+    public ResponseEntity<ObservationDto> updateObservation(@PathVariable Long id, @RequestBody JsonPatch patch) {
+        ObservationDto updatedObservation = observationService.updateObservation(id, patch);
+        return ResponseEntity.ok(updatedObservation);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteObservation(@PathVariable Long id) {
