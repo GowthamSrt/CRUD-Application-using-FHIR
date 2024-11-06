@@ -1,7 +1,7 @@
 package com.ideas2it.patient.service.impl;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import com.ideas2it.patient.config.FhirConfig;
 import com.ideas2it.patient.dto.PatientDto;
 import com.ideas2it.patient.mapper.PatientMapper;
 import com.ideas2it.patient.service.PatientService;
@@ -17,15 +17,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientServiceImpl implements PatientService {
 
-    private static final String SERVER = "https://hapi.fhir.org/baseR4";
-    private final static FhirContext fhirContext;
-    private final static IGenericClient client;
+    private static final IGenericClient client = FhirConfig.getClient();
     private final PatientMapper patientMapper;
 
-    static {
-        fhirContext = FhirContext.forR4();
-        client = fhirContext.newRestfulGenericClient(SERVER);
-    }
     public PatientDto addPatient(PatientDto patientDto) {
         val patient = patientMapper.toEntity(patientDto);
         val addedPatient = (Patient) client.create()
